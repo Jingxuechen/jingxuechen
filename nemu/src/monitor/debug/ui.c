@@ -38,6 +38,12 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args);
+
+static int cmd_info(char *args);
+
+static int cmd_x(char *args);
+
 static struct {
 	char *name;
 	char *description;
@@ -46,12 +52,66 @@ static struct {
 	{ "help", "Display informations about all supported commands", cmd_help },
 	{ "c", "Continue the execution of the program", cmd_c },
 	{ "q", "Exit NEMU", cmd_q },
-
+        { "si","Single step execution N instructions then pause", cmd_si},
+        { "info","Print register",cmd_info},
+        { "x","Scan memory",cmd_x},
 	/* TODO: Add more commands */
 
 };
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
+static int cmd_info(char *args){
+        char *arg=strtok(NULL," ");
+        if(strcmp(arg,"r")==0) {
+                int i=0;
+                for(i=0;i<8;i++){
+                        printf("%s 0x%x %d\n",regsl[i],cpu.gpr[i]._32,cpu.gpr[i]._32);
+                }
+        }
+        return 0;
+}
+
+static int cmd_si(char *args){
+        char *arg = strtok(NULL," ");
+        int i=0;
+        int j;
+        if(arg == NULL){
+                cpu_exec(1);
+                return 0;
+        }
+        sscanf(arg,"%d",&i);
+        if(i<-1){
+                printf("Parameter error\n");
+                return 0;
+        }
+        if(i==-1){
+                cpu_exec(-1);
+        }
+        for(j=0;j<i;j++){
+                cpu_exec(1);
+        }
+        return 0;
+}
+
+static int cmd_x(char *args){
+    char *arg1=strtok(NULL," ");
+    char *arg2=strtok(NULL," ");
+    int len;
+    lnaddr_t address;
+
+    sscanf(arg1,"%d",&len);
+    sscanf(arg2,"%x",&address);
+
+    printf("0x%x:",address);
+    int i;
+    for(i=0;i<len;i++){
+      printf("%x",lnaddr_read(address,4));
+      address+=4;
+    }
+    printf("\n");
+    return 0;
+}
+        
 
 static int cmd_help(char *args) {
 	/* extract the first argument */
